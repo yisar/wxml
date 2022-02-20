@@ -1,5 +1,5 @@
 [package]
-name = "hello_wasm"
+name = "wxml_parser"
 version = "0.1.0"
 edition = "2018"
 

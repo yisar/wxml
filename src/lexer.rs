@@ -10,8 +10,8 @@ pub struct Lexer {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub enum Error {
-    NormalEOF,
-    NormalERR,
+    END,
+    ERR,
     Expect(Loc, String),
     UnexpectedToken(Loc, String),
 }
@@ -26,10 +26,8 @@ pub struct Token {
 pub enum Kind {
     OpenTag(String),
     CloseTag(String),
-    Symbol(String),
     Text(String),
-    LineTerminator,
-    EOF,
+    END,
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -53,7 +51,7 @@ impl Lexer {
         loop {
             match self.tokenize() {
                 Ok(tok) => self.buf.push_back(tok),
-                Err(Error::NormalEOF) => break,
+                Err(Error::END) => break,
                 Err(err) => return Err(err),
             }
         }
@@ -64,11 +62,36 @@ impl Lexer {
 impl Lexer {
     pub fn tokenize(&mut self) -> Result<Token, Error> {
         let current = self.peek_char()?;
-        println!("{:?}", current);
-        Ok(Token {
-            kind: Kind::Symbol("aaa".to_string()),
-            loc: Loc::new(1, 1, 0),
-        })
+        match current {
+            c if c !== '<' => self.read_text(),
+            c if c.is_whitespace() => {
+                self.skip_whitespace()?;
+                return self.tokenize();
+            }
+            '\n' => self.read_end(),
+            _ => self.read_tag(),
+        }
+    }
+
+    fn read_tag(&mut self) -> Result<Token, Error> {
+        return Token{
+            kind:OpenTag('div'),
+            Loc:loc::new(0,0,0)
+        }
+    }
+
+    fn read_text(&mut self) -> Result<Token, Error> {
+        return Token{
+            kind:Text('123'),
+            Loc:loc::new(0,0,0)
+        }
+    }
+
+    fn read_end(&mut self) -> Result<Token, Error> {
+        return Token{
+            kind:Text('123'),
+            Loc:loc::new(0,0,0)
+        }
     }
 }
 
@@ -79,6 +102,8 @@ impl Lexer {
             .next()
             .ok_or(Error::NormalEOF)
     }
+
+    fn 
 }
 
 impl Default for Loc {
