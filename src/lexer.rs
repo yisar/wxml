@@ -21,6 +21,7 @@ pub enum Error {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Token {
     pub kind: Kind,
+    pub attributes: Option<(String, String)>,
     pub loc: Loc,
 }
 
@@ -73,7 +74,6 @@ impl Lexer {
                 return self.tokenize();
             }
             '\n' => {
-                assert_eq!(self.take_char()?, '\n');
                 self.loc.line += 1;
                 self.loc.column = 0;
                 return Err(Error::END);
@@ -87,7 +87,7 @@ impl Lexer {
         assert_eq!(self.take_char()?, '<');
 
         let close_start = self.peek_char()? == '/';
-        
+
         if close_start {
             assert_eq!(self.take_char()?, '/');
         }
@@ -99,24 +99,41 @@ impl Lexer {
             assert_eq!(self.take_char()?, '/');
         }
 
+        let attributes = self.read_attributes();
+
         assert_eq!(self.take_char()?, '>');
 
         if close_start {
             Ok(Token {
                 kind: Kind::CloseTag(name),
+                attributes: None,
                 loc: self.loc,
             })
         } else if close_end {
             Ok(Token {
                 kind: Kind::SelfCloseTag(name),
+                attributes: None,
                 loc: self.loc,
             })
         } else {
             Ok(Token {
                 kind: Kind::OpenTag(name),
+                attributes: None,
                 loc: self.loc,
             })
         }
+    }
+
+    fn read_attributes(&mut self) -> Result<Vec<(String, String)>, Error> {
+        let out = vec![];
+
+        let current = self.take_char()?;
+
+        let c = self.peek_chars(4);
+
+        println!("{:#?}{:#?}", current, c);
+
+        Ok(out)
     }
 
     fn read_text(&mut self) -> Result<Token, Error> {
@@ -127,6 +144,7 @@ impl Lexer {
         })?;
         Ok(Token {
             kind: Kind::Text(text),
+            attributes: None,
             loc: self.loc,
         })
     }
@@ -135,6 +153,11 @@ impl Lexer {
 impl Lexer {
     fn peek_char(&self) -> Result<char, Error> {
         self.code[self.loc.pos..].chars().next().ok_or(Error::END)
+    }
+
+    fn peek_chars(&self, index: usize) -> Result<char, Error> {
+        let chars = self.code[self.loc.pos..].chars().collect::<Vec<char>>();
+        return Ok(*chars.get(index).unwrap());
     }
 
     fn skip_whitespace(&mut self) -> Result<(), Error> {
