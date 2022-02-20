@@ -1,12 +1,10 @@
-use std::collections::VecDeque;
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Lexer {
     pub code: String,
     pub loc: Loc,
-    pub buf: VecDeque<Token>,
-    pub states: Vec<usize>,
+    pub buf: Vec<Token>,
     pub pos: usize,
 }
 #[derive(Clone, Debug, PartialEq)]
@@ -45,8 +43,7 @@ impl Lexer {
         Lexer {
             code,
             loc: Loc::default(),
-            buf: VecDeque::new(),
-            states: vec![],
+            buf: vec![],
             pos: 0,
         }
     }
@@ -54,7 +51,7 @@ impl Lexer {
     pub fn tokenize_all(&mut self) -> Result<(), Error> {
         loop {
             match self.tokenize() {
-                Ok(tok) => self.buf.push_back(tok),
+                Ok(tok) => self.buf.push(tok),
                 Err(Error::END) => break,
                 Err(err) => return Err(err),
             }
