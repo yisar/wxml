@@ -28,6 +28,7 @@ pub struct Token {
 pub enum Kind {
     OpenTag(String),
     CloseTag(String),
+    SelfCloseTag(String),
     Text(String),
     END,
 }
@@ -67,7 +68,6 @@ impl Lexer {
     pub fn tokenize(&mut self) -> Result<Token, Error> {
         let current = self.peek_char()?;
         match current {
-            c if c != '<' => self.read_text(),
             c if c.is_whitespace() => {
                 self.skip_whitespace()?;
                 return self.tokenize();
@@ -78,18 +78,45 @@ impl Lexer {
                 self.loc.column = 0;
                 return Err(Error::END);
             }
+            c if c != '<' => self.read_text(),
             _ => self.read_tag(),
         }
     }
 
     fn read_tag(&mut self) -> Result<Token, Error> {
         assert_eq!(self.take_char()?, '<');
+
+        let close_start = self.peek_char()? == '/';
+        
+        if close_start {
+            assert_eq!(self.take_char()?, '/');
+        }
         let name = self.take_char_while(|c| c.is_alphanumeric())?;
+
+        let close_end = self.peek_char()? == '/';
+
+        if close_end {
+            assert_eq!(self.take_char()?, '/');
+        }
+
         assert_eq!(self.take_char()?, '>');
-        Ok(Token {
-            kind: Kind::OpenTag(name),
-            loc: self.loc,
-        })
+
+        if close_start {
+            Ok(Token {
+                kind: Kind::CloseTag(name),
+                loc: self.loc,
+            })
+        } else if close_end {
+            Ok(Token {
+                kind: Kind::SelfCloseTag(name),
+                loc: self.loc,
+            })
+        } else {
+            Ok(Token {
+                kind: Kind::OpenTag(name),
+                loc: self.loc,
+            })
+        }
     }
 
     fn read_text(&mut self) -> Result<Token, Error> {
