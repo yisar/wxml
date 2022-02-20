@@ -7,8 +7,7 @@ pub struct Lexer {
     pub loc: Loc,
     pub buf: VecDeque<Token>,
     pub states: Vec<usize>,
-    pub token_pos: usize,
-    pub prev_token_pos: usize,
+    pub pos: usize,
 }
 #[derive(Clone, Debug, PartialEq)]
 pub enum Error {
@@ -48,8 +47,7 @@ impl Lexer {
             loc: Loc::default(),
             buf: VecDeque::new(),
             states: vec![],
-            token_pos: 0,
-            prev_token_pos: 0,
+            pos: 0,
         }
     }
 
