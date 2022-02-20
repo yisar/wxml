@@ -21,7 +21,7 @@ pub enum Error {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Token {
     pub kind: Kind,
-    pub attributes: Option<(String, String)>,
+    pub attributes: Option<Vec<(String, String)>>,
     pub loc: Loc,
 }
 
@@ -79,7 +79,9 @@ impl Lexer {
                 return Err(Error::END);
             }
             c if c != '<' => self.read_text(),
-            _ => self.read_tag(),
+            _ => {
+                self.read_tag()
+            },
         }
     }
 
@@ -99,7 +101,7 @@ impl Lexer {
             assert_eq!(self.take_char()?, '/');
         }
 
-        let attributes = self.read_attributes();
+        let attributes = self.read_attributes()?;
 
         assert_eq!(self.take_char()?, '>');
 
@@ -118,20 +120,42 @@ impl Lexer {
         } else {
             Ok(Token {
                 kind: Kind::OpenTag(name),
-                attributes: None,
+                attributes: Some(attributes),
                 loc: self.loc,
             })
         }
     }
 
     fn read_attributes(&mut self) -> Result<Vec<(String, String)>, Error> {
-        let out = vec![];
+        let mut out = vec![];
 
-        let current = self.take_char()?;
+        loop {
+            let mut char = self.peek_char()?;
+            let mut next_char = self.peek_chars(1)?;
 
-        let c = self.peek_chars(4);
+            if char == '>' {
+                break;
+            }
+            if char.is_whitespace() {
+                self.take_char()?;
+            } else {
+                let mut name = self.take_char_while(|c| c != '=')?;
 
-        println!("{:#?}{:#?}", current, c);
+                assert_eq!(self.take_char()?, '=');
+
+                let quote = self.take_char()?;
+
+                let quote_type = if quote == '\"' { '\"' } else { '\'' };
+
+                let mut value = self.take_char_while(|c| c != quote_type)?;
+
+                self.take_char()?;
+
+                let trpl = (name, value);
+
+                out.push(trpl)
+            }
+        }
 
         Ok(out)
     }
@@ -157,7 +181,11 @@ impl Lexer {
 
     fn peek_chars(&self, index: usize) -> Result<char, Error> {
         let chars = self.code[self.loc.pos..].chars().collect::<Vec<char>>();
-        return Ok(*chars.get(index).unwrap());
+        let char = chars.get(index);
+        match char {
+            Some(c) => Ok(*c),
+            None => Ok(' ')
+        }
     }
 
     fn skip_whitespace(&mut self) -> Result<(), Error> {
