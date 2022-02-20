@@ -1,6 +1,6 @@
 pub mod lexer;
 
 fn main(){
-    let lexer = lexer::Lexer::new("<view>123</view>".to_string());
-    lexer::Lexer::tokenize_all()
+    let mut lexer = lexer::Lexer::new("<view>123</view>\n".to_string());
+    lexer.tokenize_all();
 }

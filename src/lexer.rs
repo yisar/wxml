@@ -7,6 +7,8 @@ pub struct Lexer {
     pub loc: Loc,
     pub buf: VecDeque<Token>,
     pub states: Vec<usize>,
+    pub token_pos: usize,
+    pub prev_token_pos: usize,
 }
 #[derive(Clone, Debug, PartialEq)]
 pub enum Error {
@@ -44,6 +46,8 @@ impl Lexer {
             loc: Loc::default(),
             buf: VecDeque::new(),
             states: vec![],
+            token_pos: 0,
+            prev_token_pos: 0,
         }
     }
 
@@ -63,47 +67,76 @@ impl Lexer {
     pub fn tokenize(&mut self) -> Result<Token, Error> {
         let current = self.peek_char()?;
         match current {
-            c if c !== '<' => self.read_text(),
+            c if c != '<' => self.read_text(),
             c if c.is_whitespace() => {
                 self.skip_whitespace()?;
                 return self.tokenize();
             }
-            '\n' => self.read_end(),
+            '\n' => {
+                assert_eq!(self.take_char()?, '\n');
+                self.loc.line += 1;
+                self.loc.column = 0;
+                return Err(Error::END);
+            }
             _ => self.read_tag(),
         }
     }
 
     fn read_tag(&mut self) -> Result<Token, Error> {
-        return Token{
-            kind:OpenTag('div'),
-            Loc:loc::new(0,0,0)
-        }
+        assert_eq!(self.take_char()?, '<');
+        let name = self.take_char_while(|c| c.is_alphanumeric())?;
+        assert_eq!(self.take_char()?, '>');
+        Ok(Token {
+            kind: Kind::OpenTag(name),
+            loc: self.loc,
+        })
     }
 
     fn read_text(&mut self) -> Result<Token, Error> {
-        return Token{
-            kind:Text('123'),
-            Loc:loc::new(0,0,0)
-        }
-    }
-
-    fn read_end(&mut self) -> Result<Token, Error> {
-        return Token{
-            kind:Text('123'),
-            Loc:loc::new(0,0,0)
-        }
+        let text = self.take_char_while(|c| match c {
+            '0'..='9' => true,
+            c if c.is_alphanumeric() => true,
+            _ => false,
+        })?;
+        Ok(Token {
+            kind: Kind::Text(text),
+            loc: self.loc,
+        })
     }
 }
 
 impl Lexer {
     fn peek_char(&self) -> Result<char, Error> {
-        self.code[self.loc.pos..]
-            .chars()
-            .next()
-            .ok_or(Error::NormalEOF)
+        self.code[self.loc.pos..].chars().next().ok_or(Error::END)
     }
 
-    fn 
+    fn skip_whitespace(&mut self) -> Result<(), Error> {
+        return self.take_char_while(|c| c == ' ' || c == '\t').and(Ok(()));
+    }
+
+    fn take_char_while<F>(&mut self, mut f: F) -> Result<String, Error>
+    where
+        F: FnMut(char) -> bool,
+    {
+        let mut s = "".to_string();
+        while !self.eof() && f(self.peek_char()?) {
+            s.push(self.take_char()?);
+        }
+        Ok(s)
+    }
+
+    fn eof(&self) -> bool {
+        self.loc.pos >= self.code.len()
+    }
+
+    fn take_char(&mut self) -> Result<char, Error> {
+        let mut iter = self.code[self.loc.pos..].char_indices();
+        let (_, cur_char) = iter.next().ok_or(Error::END)?;
+        let (next_pos, _) = iter.next().unwrap_or((cur_char.len_utf8(), ' '));
+        self.loc.pos += next_pos;
+        self.loc.column += next_pos;
+        Ok(cur_char)
+    }
 }
 
 impl Default for Loc {
