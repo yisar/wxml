@@ -38,12 +38,18 @@ impl Parser {
 
                     match next {
                         Ok(n) => {
-                            if let Kind::CloseTag(_) = n.kind {
-                                self.read_child()?;
-                                break;
-                            } else {
-                                let node = self.read_child()?;
-                                children.push(node);
+                            match n.kind {
+                                Kind::CloseTag(_) => {
+                                    self.read_child()?;
+                                    break;
+                                }
+                                Kind::Comment(_) => {
+                                    self.read_child()?;
+                                }
+                                _ => {
+                                    let node = self.read_child()?;
+                                    children.push(node);
+                                }
                             }
                         }
                         Err(_) => break,
@@ -72,8 +78,10 @@ impl Parser {
                     children: None,
                 })
             }
+            Kind::Comment(_) => {
+                return self.read_child();
+            }
             _ => {
-                println!("{:#?}", current);
                 Err(Error::END)
             }
         }

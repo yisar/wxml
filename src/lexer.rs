@@ -28,6 +28,7 @@ pub enum Kind {
     SelfCloseTag(String),
     Attribute(String, String),
     Text(String),
+    Comment(String),
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -68,17 +69,32 @@ impl Lexer {
                 self.loc.line += 1;
                 self.loc.column = 0;
                 return self.tokenize();
-            },
+            }
             c if c.is_whitespace() => {
                 self.skip_whitespace()?;
                 return self.tokenize();
-            },
+            }
             c if c != '<' => self.read_text(),
             _ => {
-                println!("{:#?}", current);
-                self.read_tag()
-            },
+                let next_char = self.peek_chars(1)?;
+                if next_char == '!' {
+                    return self.read_comment();
+                } else {
+                    return self.read_tag();
+                }
+            }
         }
+    }
+
+    fn read_comment(&mut self) -> Result<Token, Error> {
+        let _perfix = self.take_char_while(|c| c == '<' || c == '!' || c == '-')?;
+        let comment = self.take_char_while(|c| c != '-')?;
+        let _suffix = self.take_char_while(|c| c == '>' || c == '!' || c == '-')?;
+        Ok(Token {
+            kind: Kind::Comment(comment),
+            attributes: None,
+            loc: self.loc,
+        })
     }
 
     fn read_tag(&mut self) -> Result<Token, Error> {
@@ -227,7 +243,11 @@ impl Default for Loc {
 
 impl Loc {
     pub fn new(line: usize, column: usize, index: usize) -> Self {
-        Self { line, column, index }
+        Self {
+            line,
+            column,
+            index,
+        }
     }
 }
 
