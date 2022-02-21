@@ -106,7 +106,7 @@ impl Lexer {
         if close_start {
             assert_eq!(self.take_char()?, '/');
         }
-        let name = self.take_char_while(|c| c != '/' && c != '>')?;
+        let name = self.take_char_while(|c| c != '/' && c != '>' && c != ' ')?;
 
         let close_end = self.peek_char()? == '/';
 
