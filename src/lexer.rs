@@ -64,17 +64,21 @@ impl Lexer {
     pub fn tokenize(&mut self) -> Result<Token, Error> {
         let current = self.peek_char()?;
         match current {
+            '\n' => {
+                assert_eq!(self.take_char()?, '\n');
+                self.loc.line += 1;
+                self.loc.column = 0;
+                return self.tokenize();
+            },
             c if c.is_whitespace() => {
                 self.skip_whitespace()?;
                 return self.tokenize();
-            }
-            '\n' => {
-                self.loc.line += 1;
-                self.loc.column = 0;
-                return Err(Error::END);
-            }
+            },
             c if c != '<' => self.read_text(),
-            _ => self.read_tag(),
+            _ => {
+                println!("{:#?}", current);
+                self.read_tag()
+            },
         }
     }
 
