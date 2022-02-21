@@ -10,9 +10,8 @@ pub struct Lexer {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Error {
     END,
-    ERR,
-    Expect(Loc, String),
-    UnexpectedToken(Loc, String),
+    Expect(Loc, String),          //todo
+    UnexpectedToken(Loc, String), //todo
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -88,7 +87,7 @@ impl Lexer {
         if close_start {
             assert_eq!(self.take_char()?, '/');
         }
-        let name = self.take_char_while(|c| c.is_alphanumeric())?;
+        let name = self.take_char_while(|c| c != '/' && c != '>')?;
 
         let close_end = self.peek_char()? == '/';
 
@@ -128,7 +127,7 @@ impl Lexer {
             let char = self.peek_char()?;
             let next_char = self.peek_chars(1)?;
 
-            if char == '>'|| (char == '/' && next_char == '>'){
+            if char == '>' || (char == '/' && next_char == '>') {
                 break;
             }
 
@@ -161,11 +160,7 @@ impl Lexer {
     }
 
     fn read_text(&mut self) -> Result<Token, Error> {
-        let text = self.take_char_while(|c| match c {
-            '0'..='9' => true,
-            c if c.is_alphanumeric() => true,
-            _ => false,
-        })?;
+        let text = self.take_char_while(|c| c != '<')?;
         Ok(Token {
             kind: Kind::Text(text),
             attributes: None,
@@ -221,7 +216,7 @@ impl Default for Loc {
     fn default() -> Self {
         Self {
             line: 1,
-            column: 0,
+            column: 1,
             pos: 0,
         }
     }

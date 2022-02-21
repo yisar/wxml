@@ -34,13 +34,19 @@ impl Parser {
         match &current.kind {
             Kind::OpenTag(_) => {
                 loop {
-                    let next = self.peek_token(0)?;
-                    if let Kind::CloseTag(_) = next.kind {
-                        self.read_child()?;
-                        break;
-                    } else {
-                        let node = self.read_child()?;
-                        children.push(node);
+                    let next = self.peek_token(0);
+
+                    match next {
+                        Ok(n) => {
+                            if let Kind::CloseTag(_) = n.kind {
+                                self.read_child()?;
+                                break;
+                            } else {
+                                let node = self.read_child()?;
+                                children.push(node);
+                            }
+                        }
+                        Err(_) => break,
                     }
                 }
                 return Ok(Node {
@@ -66,7 +72,10 @@ impl Parser {
                     children: None,
                 })
             }
-            _ => Err(Error::END),
+            _ => {
+                println!("{:#?}", current);
+                Err(Error::END)
+            }
         }
     }
 }
@@ -78,6 +87,8 @@ impl Parser {
             self.lexer.pos += 1;
             Ok(self.lexer.buf[pos].clone())
         } else {
+            println!("{:#?}", 123);
+
             Err(Error::END)
         }
     }
