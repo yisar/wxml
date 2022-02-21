@@ -1,4 +1,4 @@
-use crate::lexer::{Error, Kind, Lexer, Loc, Token};
+use crate::lexer::{Error, Kind, Lexer, Token};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Parser {
@@ -7,8 +7,8 @@ pub struct Parser {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Node {
-    pub base: Token,
-    pub children: Vec<Node>,
+    pub token: Token,
+    pub children: Option<Vec<Node>>,
 }
 
 impl Parser {
@@ -24,55 +24,50 @@ impl Parser {
     }
 
     pub fn read_node(&mut self) -> Result<Node, Error> {
-        return self.read_tag();
+        return self.read_child();
     }
 
-    pub fn read_tag(&mut self) -> Result<Node, Error> {
+    pub fn read_child(&mut self) -> Result<Node, Error> {
         let current = self.read_token()?;
         let mut children = vec![];
 
         match &current.kind {
             Kind::OpenTag(_) => {
                 loop {
-                    let next = self.peek(0)?;
+                    let next = self.peek_token(0)?;
                     if let Kind::CloseTag(_) = next.kind {
-                        self.read_tag()?;
+                        self.read_child()?;
                         break;
                     } else {
-                        let node = self.read_tag()?;
+                        let node = self.read_child()?;
                         children.push(node);
                     }
                 }
                 return Ok(Node {
-                    base: current,
-                    children,
+                    token: current,
+                    children: Some(children),
                 });
             }
             Kind::CloseTag(_) => {
                 return Ok(Node {
-                    base: current,
-                    children: vec![],
+                    token: current,
+                    children: None,
                 });
             }
             Kind::SelfCloseTag(_) => {
                 return Ok(Node {
-                    base: current,
-                    children: vec![],
+                    token: current,
+                    children: None,
                 });
             }
             Kind::Text(_) => {
                 return Ok(Node {
-                    base: current,
-                    children: vec![],
+                    token: current,
+                    children: None,
                 })
             }
-            _ => {}
+            _ => Err(Error::END),
         }
-
-        Ok(Node {
-            base: self.lexer.buf[1].clone(),
-            children: vec![],
-        })
     }
 }
 
@@ -87,7 +82,7 @@ impl Parser {
         }
     }
 
-    pub fn peek(&mut self, index: usize) -> Result<Token, Error> {
+    pub fn peek_token(&mut self, index: usize) -> Result<Token, Error> {
         let index_in_buf = self.lexer.pos + index;
         if index_in_buf < self.lexer.buf.len() {
             Ok(self.lexer.buf[index_in_buf].clone())

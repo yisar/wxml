@@ -80,6 +80,7 @@ impl Lexer {
     }
 
     fn read_tag(&mut self) -> Result<Token, Error> {
+        let loc = self.loc;
         assert_eq!(self.take_char()?, '<');
 
         let close_start = self.peek_char()? == '/';
@@ -103,19 +104,19 @@ impl Lexer {
             Ok(Token {
                 kind: Kind::CloseTag(name),
                 attributes: None,
-                loc: self.loc,
+                loc,
             })
         } else if close_end {
             Ok(Token {
                 kind: Kind::SelfCloseTag(name),
                 attributes: None,
-                loc: self.loc,
+                loc,
             })
         } else {
             Ok(Token {
                 kind: Kind::OpenTag(name),
                 attributes: Some(attributes),
-                loc: self.loc,
+                loc,
             })
         }
     }
@@ -144,15 +145,15 @@ impl Lexer {
 
                 let value = self.take_char_while(|c| c != quote_type)?;
 
-                self.take_char()?;
-
-                let trpl = Token {
+                let attr = Token {
                     kind: Kind::Attribute(name, value),
                     loc: self.loc,
                     attributes: None,
                 };
 
-                attributes.push(trpl)
+                attributes.push(attr);
+
+                self.take_char()?;
             }
         }
 
