@@ -121,7 +121,7 @@ impl Lexer {
     }
 
     fn read_attributes(&mut self) -> Result<Vec<Token>, Error> {
-        let mut out = vec![];
+        let mut attributes = vec![];
 
         loop {
             let char = self.peek_char()?;
@@ -130,6 +130,7 @@ impl Lexer {
             if char == '>'|| (char == '/' && next_char == '>'){
                 break;
             }
+
             if char.is_whitespace() {
                 self.take_char()?;
             } else {
@@ -151,11 +152,11 @@ impl Lexer {
                     attributes: None,
                 };
 
-                out.push(trpl)
+                attributes.push(trpl)
             }
         }
 
-        Ok(out)
+        Ok(attributes)
     }
 
     fn read_text(&mut self) -> Result<Token, Error> {
