@@ -18,7 +18,7 @@ pub enum Error {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Token {
     pub kind: Kind,
-    pub attributes: Option<Vec<(String, String)>>,
+    pub attributes: Option<Vec<Token>>,
     pub loc: Loc,
 }
 
@@ -27,6 +27,7 @@ pub enum Kind {
     OpenTag(String),
     CloseTag(String),
     SelfCloseTag(String),
+    Attribute(String, String),
     Text(String),
     END,
 }
@@ -74,9 +75,7 @@ impl Lexer {
                 return Err(Error::END);
             }
             c if c != '<' => self.read_text(),
-            _ => {
-                self.read_tag()
-            },
+            _ => self.read_tag(),
         }
     }
 
@@ -121,20 +120,20 @@ impl Lexer {
         }
     }
 
-    fn read_attributes(&mut self) -> Result<Vec<(String, String)>, Error> {
+    fn read_attributes(&mut self) -> Result<Vec<Token>, Error> {
         let mut out = vec![];
 
         loop {
-            let mut char = self.peek_char()?;
-            let mut next_char = self.peek_chars(1)?;
+            let char = self.peek_char()?;
+            let next_char = self.peek_chars(1)?;
 
-            if char == '>' {
+            if char == '>'|| (char == '/' && next_char == '>'){
                 break;
             }
             if char.is_whitespace() {
                 self.take_char()?;
             } else {
-                let mut name = self.take_char_while(|c| c != '=')?;
+                let name = self.take_char_while(|c| c != '=')?;
 
                 assert_eq!(self.take_char()?, '=');
 
@@ -142,11 +141,15 @@ impl Lexer {
 
                 let quote_type = if quote == '\"' { '\"' } else { '\'' };
 
-                let mut value = self.take_char_while(|c| c != quote_type)?;
+                let value = self.take_char_while(|c| c != quote_type)?;
 
                 self.take_char()?;
 
-                let trpl = (name, value);
+                let trpl = Token {
+                    kind: Kind::Attribute(name, value),
+                    loc: self.loc,
+                    attributes: None,
+                };
 
                 out.push(trpl)
             }
@@ -179,7 +182,7 @@ impl Lexer {
         let char = chars.get(index);
         match char {
             Some(c) => Ok(*c),
-            None => Ok(' ')
+            None => Ok(' '),
         }
     }
 
