@@ -82,21 +82,19 @@ impl Parser {
 
 impl Parser {
     pub fn read_token(&mut self) -> Result<Token, Error> {
-        if self.lexer.pos < self.lexer.buf.len() {
-            let pos = self.lexer.pos;
-            self.lexer.pos += 1;
-            Ok(self.lexer.buf[pos].clone())
+        if self.lexer.index < self.lexer.tokens.len() {
+            let index = self.lexer.index;
+            self.lexer.index += 1;
+            Ok(self.lexer.tokens[index].clone())
         } else {
-            println!("{:#?}", 123);
-
             Err(Error::END)
         }
     }
 
     pub fn peek_token(&mut self, index: usize) -> Result<Token, Error> {
-        let index_in_buf = self.lexer.pos + index;
-        if index_in_buf < self.lexer.buf.len() {
-            Ok(self.lexer.buf[index_in_buf].clone())
+        let index_in_tokens = self.lexer.index + index;
+        if index_in_tokens < self.lexer.tokens.len() {
+            Ok(self.lexer.tokens[index_in_tokens].clone())
         } else {
             Err(Error::END)
         }

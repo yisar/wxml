@@ -4,8 +4,8 @@ use std::fmt;
 pub struct Lexer {
     pub code: String,
     pub loc: Loc,
-    pub buf: Vec<Token>,
-    pub pos: usize,
+    pub tokens: Vec<Token>,
+    pub index: usize,
 }
 #[derive(Clone, Debug, PartialEq)]
 pub enum Error {
@@ -28,14 +28,13 @@ pub enum Kind {
     SelfCloseTag(String),
     Attribute(String, String),
     Text(String),
-    END,
 }
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Loc {
     pub line: usize,
     pub column: usize,
-    pub pos: usize,
+    pub index: usize,
 }
 
 impl Lexer {
@@ -43,15 +42,15 @@ impl Lexer {
         Lexer {
             code,
             loc: Loc::default(),
-            buf: vec![],
-            pos: 0,
+            tokens: vec![],
+            index: 0,
         }
     }
 
     pub fn tokenize_all(&mut self) -> Result<(), Error> {
         loop {
             match self.tokenize() {
-                Ok(tok) => self.buf.push(tok),
+                Ok(tok) => self.tokens.push(tok),
                 Err(Error::END) => break,
                 Err(err) => return Err(err),
             }
@@ -175,11 +174,11 @@ impl Lexer {
 
 impl Lexer {
     fn peek_char(&self) -> Result<char, Error> {
-        self.code[self.loc.pos..].chars().next().ok_or(Error::END)
+        self.code[self.loc.index..].chars().next().ok_or(Error::END)
     }
 
     fn peek_chars(&self, index: usize) -> Result<char, Error> {
-        let chars = self.code[self.loc.pos..].chars().collect::<Vec<char>>();
+        let chars = self.code[self.loc.index..].chars().collect::<Vec<char>>();
         let char = chars.get(index);
         match char {
             Some(c) => Ok(*c),
@@ -203,15 +202,15 @@ impl Lexer {
     }
 
     fn eof(&self) -> bool {
-        self.loc.pos >= self.code.len()
+        self.loc.index >= self.code.len()
     }
 
     fn take_char(&mut self) -> Result<char, Error> {
-        let mut iter = self.code[self.loc.pos..].char_indices();
+        let mut iter = self.code[self.loc.index..].char_indices();
         let (_, cur_char) = iter.next().ok_or(Error::END)?;
-        let (next_pos, _) = iter.next().unwrap_or((cur_char.len_utf8(), ' '));
-        self.loc.pos += next_pos;
-        self.loc.column += next_pos;
+        let (next_index, _) = iter.next().unwrap_or((cur_char.len_utf8(), ' '));
+        self.loc.index += next_index;
+        self.loc.column += next_index;
         Ok(cur_char)
     }
 }
@@ -221,14 +220,14 @@ impl Default for Loc {
         Self {
             line: 1,
             column: 1,
-            pos: 0,
+            index: 0,
         }
     }
 }
 
 impl Loc {
-    pub fn new(line: usize, column: usize, pos: usize) -> Self {
-        Self { line, column, pos }
+    pub fn new(line: usize, column: usize, index: usize) -> Self {
+        Self { line, column, index }
     }
 }
 
@@ -236,8 +235,8 @@ impl fmt::Debug for Loc {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Loc(line:{},column:{},pos:{})",
-            self.line, self.column, self.pos
+            "Loc(line:{},column:{},index:{})",
+            self.line, self.column, self.index
         )
     }
 }
