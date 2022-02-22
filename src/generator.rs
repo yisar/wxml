@@ -25,7 +25,7 @@ impl Generator {
         let token = node.token;
         match token.kind {
             Kind::OpenTag(name) => {
-                let tag = self.first_upper(name);
+                let tag = self.camel_case(name);
                 self.code = format!("{}<{}", self.code, tag);
                 for attr in token.attributes.unwrap() {
                     if let Kind::Attribute(name, value) = attr.kind {
@@ -68,16 +68,24 @@ impl Generator {
 
     fn wried_prop(&mut self, p: String) -> String {
         if p.starts_with("bind") {
-            let mut n = p.replace("bind", "");
-            if n == "tap".to_string() {
-                n = "click".to_string();
-            }
-            if n == "confirm".to_string() {
-                n = "keydown".to_string();
-            }
-            return format!("{}{}", "on", n);
+            let n = p.replace("bind", "");
+            let s = match n.as_str() {
+                "tap" => "click".to_string(),
+                "click" => "keydown".to_string(),
+                _ => n
+            };
+            return format!("{}{}", "on", s);
         } else {
             p
         }
+    }
+
+    fn camel_case(&mut self, s: String) -> String {
+        let arr: Vec<&str> = s.split("-").collect();
+        let mut out = "".to_string();
+        for s in arr {
+            out = format!("{}{}", out, self.first_upper(s.to_string()));
+        }
+        out
     }
 }
