@@ -17,7 +17,7 @@ impl Generator {
 
     pub fn generate_fre(&mut self) {
         let root = self.ast.clone();
-        return self.generate_node(root);
+        self.generate_node(root);
     }
 
     pub fn generate_node(&mut self, node: Node) {
@@ -29,8 +29,8 @@ impl Generator {
                 self.code = format!("{}<{}", self.code, tag);
                 for attr in token.attributes.unwrap() {
                     if let Kind::Attribute(name, value) = attr.kind {
-                        let real_name = self.wried_prop(name);
-                        self.code = format!("{} {}=\"{}\"", self.code, real_name, value)
+                        let prop = self.wried_prop(name);
+                        self.code = format!("{} {}=\"{}\"", self.code, prop, value)
                     }
                 }
                 self.code += ">";
@@ -44,7 +44,8 @@ impl Generator {
                 self.code = format!("{}<{}", self.code, tag);
                 for attr in token.attributes.unwrap() {
                     if let Kind::Attribute(name, value) = attr.kind {
-                        self.code = format!("{} {}=\"{}\"", self.code, name, value)
+                        let prop = self.wried_prop(name);
+                        self.code = format!("{} {}=\"{}\"", self.code, prop, value)
                     }
                 }
                 self.code += ">";
@@ -55,6 +56,7 @@ impl Generator {
             _ => {}
         };
     }
+
 }
 
 impl Generator {
