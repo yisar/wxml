@@ -83,7 +83,7 @@ impl Generator {
                 "if" => {
                     return code;
                 }
-                "for" => return format!("{{{}.map((item)=>{}}};", direct.1, code),
+                "for" => return format!("{{{}.map((item)=>{})}}", direct.1, code),
                 _ => {
                     return code;
                 }
