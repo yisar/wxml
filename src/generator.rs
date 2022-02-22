@@ -69,7 +69,8 @@ impl Generator {
                 code += "/>";
             }
             Kind::Text(text) => {
-                code = format!("{}{}", code, text);
+                let expression = self.parse_expression(text);
+                code = format!("{}{}", code, expression);
             }
             _ => {}
         };

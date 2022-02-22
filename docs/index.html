@@ -48,7 +48,9 @@
         import init, { compile } from './wxml_parser.js';
         init().then(() => {
             const input = document.querySelector('.editor');
-            const output = document.querySelector('.output')
+            const output = document.querySelector('.output');
+            input.value = "<view>hello world!</view>";
+            output.textContent = compile(input.value);
             input.oninput = (e) => {
                 const i = e.target.value
                 const o = compile(i)
