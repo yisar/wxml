@@ -15,48 +15,84 @@ impl Generator {
         }
     }
 
-    pub fn generate_fre(&mut self) {
+    pub fn generate_fre(&mut self) -> String {
         let root = self.ast.clone();
-        self.generate_node(root);
+        return self.generate_node(root);
     }
 
-    pub fn generate_node(&mut self, node: Node) {
-        // println!("{:#?}", node);
+    pub fn generate_node(&mut self, node: Node) -> String {
         let token = node.token;
+        let mut directs = vec![];
+        let mut code = "".to_string();
+
         match token.kind {
             Kind::OpenTag(name) => {
                 let tag = self.camel_case(name);
-                self.code = format!("{}<{}", self.code, tag);
+                code = format!("{}<{}", code, tag);
                 for attr in token.attributes.unwrap() {
                     if let Kind::Attribute(name, value) = attr.kind {
                         let prop = self.wried_prop(name);
-                        self.code = format!("{} {}=\"{}\"", self.code, prop, value)
+                        let expression = self.take_expression(value);
+
+                        match prop.as_str() {
+                            "wx:key" => code = format!("{} {}=\"{}\"", code, "key", expression),
+                            "wx:if" => {
+                                directs.push(("if", expression));
+                            }
+                            "wx:for" => directs.push(("for", expression)),
+                            _ => code = format!("{} {}=\"{}\"", code, prop, expression),
+                        }
                     }
                 }
-                self.code += ">";
+                code += ">";
                 for child in node.children.unwrap() {
-                    self.generate_node(child)
+                    let str = self.generate_node(child);
+                    code = format!("{}{}", code, str);
                 }
-                self.code = format!("{}</{}>", self.code, tag);
+                code = format!("{}</{}>", code, tag);
             }
             Kind::SelfCloseTag(name) => {
                 let tag = self.first_upper(name);
-                self.code = format!("{}<{}", self.code, tag);
+                code = format!("{}<{}", code, tag);
                 for attr in token.attributes.unwrap() {
                     if let Kind::Attribute(name, value) = attr.kind {
                         let prop = self.wried_prop(name);
-                        self.code = format!("{} {}=\"{}\"", self.code, prop, value)
+                        let expression = self.take_expression(value);
+                        match prop.as_str() {
+                            "wx:key" => code = format!("{} {}=\"{}\"", code, "key", expression),
+                            "wx:if" => {
+                                directs.push(("if", expression));
+                            }
+                            "wx:for" => directs.push(("for", expression)),
+                            _ => code = format!("{} {}=\"{}\"", code, prop, expression),
+                        }
                     }
                 }
-                self.code += ">";
+                code += "/>";
             }
             Kind::Text(text) => {
-                self.code = format!("{}{}", self.code, text);
+                code = format!("{}{}", code, text);
             }
             _ => {}
         };
+        let c = self.generate_directs(directs, code);
+        return c;
     }
 
+    pub fn generate_directs(&mut self, directs: Vec<(&str, String)>, code: String) -> String {
+        for direct in directs {
+            match direct.0 {
+                "if" => {
+                    return code;
+                }
+                "for" => return format!("{{{}.map((item)=>{}}};", direct.1, code),
+                _ => {
+                    return code;
+                }
+            }
+        }
+        return code;
+    }
 }
 
 impl Generator {
@@ -91,5 +127,10 @@ impl Generator {
             out = format!("{}{}", out, self.first_upper(s.to_string()));
         }
         out
+    }
+
+    fn take_expression(&mut self, e: String) -> String {
+        // todo
+        return e.replace("{{", "").replace("}}", "");
     }
 }
