@@ -108,13 +108,13 @@ impl Lexer {
         }
         let name = self.take_char_while(|c| c != '/' && c != '>' && c != ' ')?;
 
+        let attributes = self.read_attributes()?;
+
         let close_end = self.peek_char()? == '/';
 
         if close_end {
             assert_eq!(self.take_char()?, '/');
         }
-
-        let attributes = self.read_attributes()?;
 
         assert_eq!(self.take_char()?, '>');
 
@@ -127,7 +127,7 @@ impl Lexer {
         } else if close_end {
             Ok(Token {
                 kind: Kind::SelfCloseTag(name),
-                attributes: None,
+                attributes: Some(attributes),
                 loc,
             })
         } else {

@@ -1,9 +1,10 @@
 pub mod lexer;
 pub mod parser;
+pub mod generator;
 
 fn main() {
     let mut parser = parser::Parser::new("<view class=\"container\">
-    <import src=\"./footer.wxml\"></import>
+    <import src=\"./footer.wxml\"/>
     <view class=\"title\">
       <text>todos</text>
     </view>
@@ -21,6 +22,8 @@ fn main() {
     <button type=\"primary\" bindtap=\"motal\">showMotal</button>
     <button type=\"primary\" bindtap=\"navigateTo\">navigateTo</button>
   </view>");
-    let res = parser.parse_all();
-    println!("{:#?}", res);
+    let ast = parser.parse_all().unwrap();
+    let mut gen = generator::Generator::new(ast);
+    gen.generate_fre();
+    println!("{:#?}", gen.code);
 }
