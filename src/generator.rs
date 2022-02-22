@@ -69,12 +69,14 @@ impl Generator {
     fn wried_prop(&mut self, p: String) -> String {
         if p.starts_with("bind") {
             let n = p.replace("bind", "");
-            let s = match n.as_str() {
-                "tap" => "click".to_string(),
-                "click" => "keydown".to_string(),
-                _ => n
-            };
-            return format!("{}{}", "on", s);
+            return format!(
+                "on{}",
+                match n.as_str() {
+                    "tap" => "click".to_string(),
+                    "click" => "keydown".to_string(),
+                    _ => n,
+                }
+            );
         } else {
             p
         }
