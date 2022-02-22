@@ -1,16 +1,35 @@
-# hello_wasm
-hello wasm
+# wxml-parser
+[wean-wxml](https://github.com/ctripcorp/wean/tree/master/wxml) 的 rs 版本
 
-两点需要注意：
+```rust
+pub mod lexer;
+pub mod parser;
+pub mod generator;
 
-1. 安装 wasm-pack
-
-```shell
-cargo install wasm-pack --no-default-features # 忽略 OpenSSL
-```
-
-2. 构建时的 target
-
-```shell
-wasm-pack build --target web
+fn main() {
+    let mut parser = parser::Parser::new("
+    <view class=\"container\">
+    <import src=\"./footer.wxml\"/>
+    <view class=\"title\">
+      <text>todos</text>
+    </view>
+    <view class=\"list\">
+      <view class=\"list-items\">
+        <input bindconfirm=\"addtodo\" placeholder=\"What needs to be done?\" value=\"{{name}}\" id=\"test\"></input>
+      </view>
+      <block wx:for=\"{{list}}\" wx:key=\"id\">
+        <use-item iitem=\"{{item}}\" bindmyevent=\"eeevent\" bindclear=\"clear\">
+        </use-item>
+      </block>
+      <template is=\"footer\" data=\"{{leftcount}}\"></template>
+    </view>
+    <button type=\"warn\" bindtap=\"toast\" style=\"margin-top:30px\">showToast</button>
+    <button type=\"primary\" bindtap=\"motal\">showMotal</button>
+    <button type=\"primary\" bindtap=\"navigateTo\">navigateTo</button>
+  </view>");
+    let ast = parser.parse_all().unwrap();
+    let mut gen = generator::Generator::new(ast);
+    let code = gen.generate_fre();
+    println!("{:#?}", code)
+}
 ```
