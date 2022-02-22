@@ -30,7 +30,7 @@ impl Generator {
                 for attr in token.attributes.unwrap() {
                     if let Kind::Attribute(name, value) = attr.kind {
                         let prop = self.wried_prop(name);
-                        let expression = self.take_expression(value);
+                        let expression = self.parse_expression(value);
 
                         match prop.as_str() {
                             "wx:key" => code = format!("{} {}=\"{}\"", code, "key", expression),
@@ -55,7 +55,7 @@ impl Generator {
                 for attr in token.attributes.unwrap() {
                     if let Kind::Attribute(name, value) = attr.kind {
                         let prop = self.wried_prop(name);
-                        let expression = self.take_expression(value);
+                        let expression = self.parse_expression(value);
                         match prop.as_str() {
                             "wx:key" => code = format!("{} {}=\"{}\"", code, "key", expression),
                             "wx:if" => {
@@ -109,7 +109,7 @@ impl Generator {
                 "on{}",
                 match n.as_str() {
                     "tap" => "click".to_string(),
-                    "click" => "keydown".to_string(),
+                    "confirm" => "keydown".to_string(),
                     _ => n,
                 }
             );
@@ -127,8 +127,8 @@ impl Generator {
         out
     }
 
-    fn take_expression(&mut self, e: String) -> String {
-        // todo
+    fn parse_expression(&mut self, e: String) -> String {
+        // todo expression parser
         return e.replace("{{", "").replace("}}", "");
     }
 }
