@@ -4,14 +4,12 @@ use crate::parser::Node;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Generator {
     pub ast: Node,
-    pub code: String,
 }
 
 impl Generator {
     pub fn new(ast: Node) -> Generator {
         Generator {
             ast,
-            code: "".to_string(),
         }
     }
 
