@@ -69,7 +69,7 @@ impl Generator {
                 code += "/>";
             }
             Kind::Text(text) => {
-                let expression = self.parse_expression(text);
+                let expression = self.parse_expression_text(text);
                 code = format!("{}{}", code, expression);
             }
             _ => {}
@@ -131,5 +131,10 @@ impl Generator {
     fn parse_expression(&mut self, e: String) -> String {
         // todo expression parser
         return e.replace("{{", "").replace("}}", "");
+    }
+
+    fn parse_expression_text(&mut self, e: String) -> String {
+        // todo expression parser
+        return e.replace("{{", "{").replace("}}", "}");
     }
 }
