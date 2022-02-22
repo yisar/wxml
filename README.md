@@ -7,7 +7,8 @@ pub mod parser;
 pub mod generator;
 
 fn main() {
-    let mut parser = parser::Parser::new("<view class=\"container\">
+    let mut parser = parser::Parser::new("
+    <view class=\"container\">
     <import src=\"./footer.wxml\"/>
     <view class=\"title\">
       <text>todos</text>
@@ -28,7 +29,7 @@ fn main() {
   </view>");
     let ast = parser.parse_all().unwrap();
     let mut gen = generator::Generator::new(ast);
-    gen.generate_fre();
-    println!("{:#?}", gen.code);
+    let code = gen.generate_fre();
+    println!("{:#?}", code)
 }
 ```
