@@ -29,7 +29,8 @@ impl Generator {
                 self.code = format!("{}<{}", self.code, tag);
                 for attr in token.attributes.unwrap() {
                     if let Kind::Attribute(name, value) = attr.kind {
-                        self.code = format!("{} {}={}", self.code, name, value)
+                        let real_name = self.wried_prop(name);
+                        self.code = format!("{} {}=\"{}\"", self.code, real_name, value)
                     }
                 }
                 self.code += ">";
@@ -43,11 +44,11 @@ impl Generator {
                 self.code = format!("{}<{}", self.code, tag);
                 for attr in token.attributes.unwrap() {
                     if let Kind::Attribute(name, value) = attr.kind {
-                        self.code = format!("{} {}={}", self.code, name, value)
+                        self.code = format!("{} {}=\"{}\"", self.code, name, value)
                     }
                 }
                 self.code += ">";
-            },
+            }
             Kind::Text(text) => {
                 self.code = format!("{}{}", self.code, text);
             }
@@ -57,11 +58,26 @@ impl Generator {
 }
 
 impl Generator {
-    fn first_upper(&mut self,s: String) -> String {
+    fn first_upper(&mut self, s: String) -> String {
         let mut c = s.chars();
         match c.next() {
             None => String::new(),
             Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+        }
+    }
+
+    fn wried_prop(&mut self, p: String) -> String {
+        if p.starts_with("bind") {
+            let mut n = p.replace("bind", "");
+            if n == "tap".to_string() {
+                n = "click".to_string();
+            }
+            if n == "confirm".to_string() {
+                n = "keydown".to_string();
+            }
+            return format!("{}{}", "on", n);
+        } else {
+            p
         }
     }
 }
