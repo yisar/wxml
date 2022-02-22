@@ -25,25 +25,43 @@ impl Generator {
         let token = node.token;
         match token.kind {
             Kind::OpenTag(name) => {
-                self.code = format!("{}<{}>", self.code, name);
-                match node.children {
-                    Some(children) => {
-                        for child in children {
-                            self.generate_node(child)
-                        }
+                let tag = self.first_upper(name);
+                self.code = format!("{}<{}", self.code, tag);
+                for attr in token.attributes.unwrap() {
+                    if let Kind::Attribute(name, value) = attr.kind {
+                        self.code = format!("{} {}={}", self.code, name, value)
                     }
-                    None => {}
                 }
-                self.code = format!("{}</{}>", self.code, name);
-            },
+                self.code += ">";
+                for child in node.children.unwrap() {
+                    self.generate_node(child)
+                }
+                self.code = format!("{}</{}>", self.code, tag);
+            }
             Kind::SelfCloseTag(name) => {
-                self.code = format!("{}<{}/>", self.code, name)
+                let tag = self.first_upper(name);
+                self.code = format!("{}<{}", self.code, tag);
+                for attr in token.attributes.unwrap() {
+                    if let Kind::Attribute(name, value) = attr.kind {
+                        self.code = format!("{} {}={}", self.code, name, value)
+                    }
+                }
+                self.code += ">";
             },
             Kind::Text(text) => {
                 self.code = format!("{}{}", self.code, text);
             }
             _ => {}
         };
+    }
+}
 
+impl Generator {
+    fn first_upper(&mut self,s: String) -> String {
+        let mut c = s.chars();
+        match c.next() {
+            None => String::new(),
+            Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+        }
     }
 }
