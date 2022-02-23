@@ -20,7 +20,7 @@ impl Parser {
 
     pub fn parse_all(&mut self) -> Result<Node, Error> {
         self.lexer.tokenize_all()?;
-        self.read_node()
+        return self.read_node();
     }
 
     pub fn read_node(&mut self) -> Result<Node, Error> {
@@ -35,7 +35,6 @@ impl Parser {
             Kind::OpenTag(_) => {
                 loop {
                     let next = self.peek_token(0);
-
                     match next {
                         Ok(n) => {
                             match n.kind {

@@ -88,10 +88,19 @@ impl Lexer {
 
     fn read_comment(&mut self) -> Result<Token, Error> {
         let _perfix = self.take_char_while(|c| c == '<' || c == '!' || c == '-')?;
-        let comment = self.take_char_while(|c| c != '-')?;
-        let _suffix = self.take_char_while(|c| c == '>' || c == '!' || c == '-')?;
+        let mut s = "".to_string();
+        loop {
+            let char = self.peek_char()?;
+            let next_char = self.peek_chars(1)?;
+            if char == '-' && next_char == '-' {
+                break;
+            }
+            s.push(self.take_char()?);
+        }
+        let _suffix = self.take_char_while(|c| c == '>' || c == '-')?;
+
         Ok(Token {
-            kind: Kind::Comment(comment),
+            kind: Kind::Comment(s),
             attributes: None,
             loc: self.loc,
         })
