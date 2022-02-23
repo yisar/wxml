@@ -112,6 +112,7 @@ impl Generator {
                     if d == "if" || d == "elseif" {
                         self.conditions.push("else".to_string());
                     }
+                    println!("{:#?}", direct.1);
                     code = format!("{}?{}:null}}", direct.1, code);
                 }
                 "wx:for" => {

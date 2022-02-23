@@ -162,23 +162,30 @@ impl Lexer {
             if char.is_whitespace() {
                 self.take_char()?;
             } else {
-                let name = self.take_char_while(|c| c != '=')?;
+                let name =
+                    self.take_char_while(|c| c != '=' && c != ' ' && c != '>' && c != '/')?;
 
-                assert_eq!(self.take_char()?, '=');
+                let no_value = self.peek_char()? != '=';
 
-                let quote = self.take_char()?;
+                if no_value {
+                    attributes.push(Token {
+                        kind: Kind::Attribute(name, "{{ture}}".to_string()),
+                        attributes: None,
+                        loc: self.loc,
+                    })
+                } else {
+                    assert_eq!(self.take_char()?, '=');
 
-                let quote_type = if quote == '\"' { '\"' } else { '\'' };
-
-                let value = self.take_char_while(|c| c != quote_type)?;
-
-                let attr = Token {
-                    kind: Kind::Attribute(name, value),
-                    loc: self.loc,
-                    attributes: None,
-                };
-
-                attributes.push(attr);
+                    let quote = self.take_char()?;
+                    let quote_type = if quote == '\"' { '\"' } else { '\'' };
+                    let value = self.take_char_while(|c| c != quote_type)?;
+                    let attr = Token {
+                        kind: Kind::Attribute(name, value),
+                        loc: self.loc,
+                        attributes: None,
+                    };
+                    attributes.push(attr);
+                }
 
                 self.take_char()?;
             }

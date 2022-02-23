@@ -49,7 +49,12 @@
         init().then(() => {
             const input = document.querySelector('.editor');
             const output = document.querySelector('.output');
-            input.value = '<view wx:for="{{list}}">hello {{item}}!</view>';
+            input.value = `<view wx:for="{{list}}">
+                hello {{item}}!
+                <text wx:if="{{a}}">a</text>
+                <text wx:elseif="{{b}}">b</text>
+                <text wx:else=/>
+            </view>`;
             output.textContent = compile(input.value);
             input.oninput = (e) => {
                 const i = e.target.value
