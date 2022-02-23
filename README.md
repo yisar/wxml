@@ -2,6 +2,8 @@
 
 [wean-wxml](https://github.com/ctripcorp/wean/tree/master/wxml) rust version, compile wxml source to [fre](https://github.com/yisar/fre) jsx code.
 
+- [Playground](https://yisar.github.io/wxml-parser/)
+
 ### Usage
 
 ```rust
