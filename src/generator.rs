@@ -1,5 +1,6 @@
 use crate::lexer::Kind;
 use crate::parser::Node;
+use std::collections::VecDeque;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Generator {
@@ -22,7 +23,7 @@ impl Generator {
 
     pub fn generate_node(&mut self, node: Node) -> String {
         let token = node.token;
-        let mut directs = vec![];
+        let mut directs = VecDeque::new();
         let mut code = "".to_string();
 
         match token.kind {
@@ -36,9 +37,10 @@ impl Generator {
 
                         match prop.as_str() {
                             "wx:key" => code = format!("{} {}=\"{}\"", code, "key", expression),
-                            "wx:if" | "wx:elseif" | "wx:else" | "wx:for" => {
-                                directs.push((prop, expression));
+                            "wx:if" | "wx:elseif" | "wx:else" => {
+                                directs.push_back((prop, expression));
                             }
+                            "wx:for" => directs.push_front((prop, expression)),
                             _ => code = format!("{} {}=\"{}\"", code, prop, expression),
                         }
                     }
@@ -62,9 +64,10 @@ impl Generator {
                         let expression = self.parse_expression(value);
                         match prop.as_str() {
                             "wx:key" => code = format!("{} {}=\"{}\"", code, "key", expression),
-                            "wx:if" | "wx:elseif" | "wx:else" | "wx:for" => {
-                                directs.push((prop, expression));
+                            "wx:if" | "wx:elseif" | "wx:else" => {
+                                directs.push_back((prop, expression));
                             }
+                            "wx:for" => directs.push_front((prop, expression)),
                             _ => code = format!("{} {}=\"{}\"", code, prop, expression),
                         }
                     }
@@ -81,11 +84,16 @@ impl Generator {
         return c;
     }
 
-    pub fn generate_directs(&mut self, directs: Vec<(String, String)>, mut code: String) -> String {
+    pub fn generate_directs(
+        &mut self,
+        directs: VecDeque<(String, String)>,
+        mut code: String,
+    ) -> String {
         let d = match self.conditions.last() {
             Some(d) => d.clone(),
             None => "".to_string(),
         };
+        let len = directs.len();
         for direct in directs {
             match direct.0.as_str() {
                 "wx:if" => {
@@ -106,9 +114,13 @@ impl Generator {
                     }
                     code = format!("{}?{}:null}}", direct.1, code);
                 }
-                "wx:for" => code = format!("{{{}.map((item)=>{})}}", direct.1, code),
-                _ => {
+                "wx:for" => {
+                    code = format!("{{{}.map((item)=>{})}}", direct.1, code);
+                    if len > 0 {
+                        code = format!("<>{}</>", code)
+                    }
                 }
+                _ => {}
             }
         }
         return code;
