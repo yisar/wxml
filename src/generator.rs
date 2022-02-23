@@ -4,12 +4,14 @@ use crate::parser::Node;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Generator {
     pub ast: Node,
+    pub conditions: Vec<String>,
 }
 
 impl Generator {
     pub fn new(ast: Node) -> Generator {
         Generator {
             ast,
+            conditions: vec![],
         }
     }
 
@@ -37,6 +39,12 @@ impl Generator {
                             "wx:if" => {
                                 directs.push(("if", expression));
                             }
+                            "wx:elseif" => {
+                                directs.push(("elseif", expression));
+                            }
+                            "wx:else" => {
+                                directs.push(("else", expression));
+                            }
                             "wx:for" => directs.push(("for", expression)),
                             _ => code = format!("{} {}=\"{}\"", code, prop, expression),
                         }
@@ -45,6 +53,9 @@ impl Generator {
                 code += ">";
                 for child in node.children.unwrap() {
                     let str = self.generate_node(child);
+                    if str == "" {
+                        println!("{:#?}", self.conditions)
+                    }
                     code = format!("{}{}", code, str);
                 }
                 code = format!("{}</{}>", code, tag);
@@ -60,6 +71,12 @@ impl Generator {
                             "wx:key" => code = format!("{} {}=\"{}\"", code, "key", expression),
                             "wx:if" => {
                                 directs.push(("if", expression));
+                            }
+                            "wx:elseif" => {
+                                directs.push(("elseif", expression));
+                            }
+                            "wx:else" => {
+                                directs.push(("else", expression));
                             }
                             "wx:for" => directs.push(("for", expression)),
                             _ => code = format!("{} {}=\"{}\"", code, prop, expression),
@@ -79,10 +96,31 @@ impl Generator {
     }
 
     pub fn generate_directs(&mut self, directs: Vec<(&str, String)>, code: String) -> String {
+        let d = match self.conditions.last() {
+            Some(d) => d.clone(),
+            None => "".to_string(),
+        };
+
+        println!("{:#?}", d);
         for direct in directs {
             match direct.0 {
                 "if" => {
-                    return code;
+                    if d == "" || d == "else" {
+                        self.conditions.push("if".to_string());
+                    }
+                    return format!("{{{}?{}:", direct.1, code);
+                }
+                "elseif" => {
+                    if d == "if" {
+                        self.conditions.push("elseif".to_string());
+                    }
+                    return format!("{}?{}:", direct.1, code);
+                }
+                "else" => {
+                    if d == "if" || d == "elseif" {
+                        self.conditions.push("else".to_string());
+                    }
+                    return format!("{}?{}:null}}", direct.1, code);
                 }
                 "for" => return format!("{{{}.map((item)=>{})}}", direct.1, code),
                 _ => {

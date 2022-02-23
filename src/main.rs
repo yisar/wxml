@@ -4,8 +4,13 @@ pub mod parser;
 
 fn main() {
   let mut parser = parser::Parser::new(
-    "<view><!-- <button type=\"warn\" bindtap=\"toast\" style=\"margin-top:30px\">showToast</button>
-    <button type=\"primary\" bindtap=\"motal\">showMotal</button> --></view>",
+    "<text>
+      <text wx:if=\"{{aaa}}\"></text>
+      <text wx:else=\"{{aaa}}\"></text>
+      <text wx:if=\"{{aaa}}\"></text>
+      <text wx:elseif=\"{{aaa}}\"></text>
+      <text wx:else=\"{{aaa}}\"></text>
+    </text>",
   );
   let res = parser.parse_all();
   match res {
