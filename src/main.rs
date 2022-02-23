@@ -5,7 +5,7 @@ pub mod parser;
 fn main() {
   let mut parser = parser::Parser::new(
     "<text>
-      <text wx:if=\"{{aaa}}\"></text>
+      <text wx:if=\"{{aaa}}\" wx:for=\"{{bbb}}\"></text>
       <text wx:else=\"{{aaa}}\"></text>
       <text wx:if=\"{{aaa}}\"></text>
       <text wx:elseif=\"{{aaa}}\"></text>

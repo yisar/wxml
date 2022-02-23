@@ -36,16 +36,9 @@ impl Generator {
 
                         match prop.as_str() {
                             "wx:key" => code = format!("{} {}=\"{}\"", code, "key", expression),
-                            "wx:if" => {
-                                directs.push(("if", expression));
+                            "wx:if" | "wx:elseif" | "wx:else" | "wx:for" => {
+                                directs.push((prop, expression));
                             }
-                            "wx:elseif" => {
-                                directs.push(("elseif", expression));
-                            }
-                            "wx:else" => {
-                                directs.push(("else", expression));
-                            }
-                            "wx:for" => directs.push(("for", expression)),
                             _ => code = format!("{} {}=\"{}\"", code, prop, expression),
                         }
                     }
@@ -69,16 +62,9 @@ impl Generator {
                         let expression = self.parse_expression(value);
                         match prop.as_str() {
                             "wx:key" => code = format!("{} {}=\"{}\"", code, "key", expression),
-                            "wx:if" => {
-                                directs.push(("if", expression));
+                            "wx:if" | "wx:elseif" | "wx:else" | "wx:for" => {
+                                directs.push((prop, expression));
                             }
-                            "wx:elseif" => {
-                                directs.push(("elseif", expression));
-                            }
-                            "wx:else" => {
-                                directs.push(("else", expression));
-                            }
-                            "wx:for" => directs.push(("for", expression)),
                             _ => code = format!("{} {}=\"{}\"", code, prop, expression),
                         }
                     }
@@ -95,36 +81,33 @@ impl Generator {
         return c;
     }
 
-    pub fn generate_directs(&mut self, directs: Vec<(&str, String)>, code: String) -> String {
+    pub fn generate_directs(&mut self, directs: Vec<(String, String)>, mut code: String) -> String {
         let d = match self.conditions.last() {
             Some(d) => d.clone(),
             None => "".to_string(),
         };
-
-        println!("{:#?}", d);
         for direct in directs {
-            match direct.0 {
-                "if" => {
+            match direct.0.as_str() {
+                "wx:if" => {
                     if d == "" || d == "else" {
                         self.conditions.push("if".to_string());
                     }
-                    return format!("{{{}?{}:", direct.1, code);
+                    code = format!("{{{}?{}:", direct.1, code);
                 }
-                "elseif" => {
+                "wx:elseif" => {
                     if d == "if" {
                         self.conditions.push("elseif".to_string());
                     }
-                    return format!("{}?{}:", direct.1, code);
+                    code = format!("{}?{}:", direct.1, code);
                 }
-                "else" => {
+                "wx:else" => {
                     if d == "if" || d == "elseif" {
                         self.conditions.push("else".to_string());
                     }
-                    return format!("{}?{}:null}}", direct.1, code);
+                    code = format!("{}?{}:null}}", direct.1, code);
                 }
-                "for" => return format!("{{{}.map((item)=>{})}}", direct.1, code),
+                "wx:for" => code = format!("{{{}.map((item)=>{})}}", direct.1, code),
                 _ => {
-                    return code;
                 }
             }
         }
