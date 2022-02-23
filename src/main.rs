@@ -4,7 +4,12 @@ pub mod parser;
 
 fn main() {
   let mut parser = parser::Parser::new(
-    "<text wx:else />",
+    "<view wx:for=\"{{list}}\">
+    hello {{item}}!
+    <text wx:if=\"{{a}}\">a</text>
+    <text wx:elseif=\"{{b}}\">b</text>
+    <text wx:else />
+</view>",
   );
   let res = parser.parse_all();
   match res {

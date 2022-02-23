@@ -169,6 +169,6 @@ impl Generator {
 
     fn parse_expression_text(&mut self, e: String) -> String {
         // todo expression parser
-        return e.replace("{{", "{").replace("}}", "}");
+        return e.replace("{{", "{").replace("}}", "}").replace("\n", "").replace("    ", "");
     }
 }

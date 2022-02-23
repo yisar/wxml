@@ -53,7 +53,7 @@
                 hello {{item}}!
                 <text wx:if="{{a}}">a</text>
                 <text wx:elseif="{{b}}">b</text>
-                <text wx:else=/>
+                <text wx:else />
             </view>`;
             output.textContent = compile(input.value);
             input.oninput = (e) => {
