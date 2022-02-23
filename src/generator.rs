@@ -169,6 +169,20 @@ impl Generator {
 
     fn parse_expression_text(&mut self, e: String) -> String {
         // todo expression parser
-        return e.replace("{{", "{").replace("}}", "}").replace("\n", "").replace("    ", "");
+        let mut out = "".to_string();
+        let mut once = true;
+        let text = e.replace("{{", "{").replace("}}", "}").replace("\n", "");
+        for s in text.chars() { // remove repeat \s
+            if s == ' ' {
+                if once == true {
+                    once = false;
+                    out.push(s);
+                }
+            } else {
+                once = true;
+                out.push(s)
+            }
+        }
+        return out;
     }
 }
